@@ -60,7 +60,6 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         // Set up the Stop button click listener
         binding.stopButton.setOnClickListener{
             playerViewModel.stop()
-            binding.seekBar.progress=0
         }
 
         // Observe the playback state and update UI accordingly

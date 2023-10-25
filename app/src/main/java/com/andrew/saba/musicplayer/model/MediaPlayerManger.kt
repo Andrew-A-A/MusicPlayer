@@ -48,10 +48,8 @@ class MediaPlayerManager {
     }
 
     fun stop() {
-        if (mediaPlayer.isPlaying) {
-            mediaPlayer.stop()
-            currentTrack=null
-        }
+        mediaPlayer.reset()
+        currentTrack=null
     }
 
 
@@ -73,7 +71,7 @@ class MediaPlayerManager {
     }
 
     // Timer to update current position
-    private val positionUpdateTimer = Timer()
+    private var positionUpdateTimer = Timer()
 
     // Function to start updating current position
     private fun startPositionUpdate() {
@@ -82,7 +80,7 @@ class MediaPlayerManager {
                 val currentPosition = mediaPlayer.currentPosition
                 playbackCallback?.onPositionChanged(currentPosition)
             }
-        }, 0, 1000) // Update every 1 second
+        }, 0, 100) // Update every 1 second
     }
     fun isMediaPlaying():Boolean{
        return mediaPlayer.isPlaying

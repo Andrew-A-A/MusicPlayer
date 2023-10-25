@@ -50,6 +50,7 @@ class PlayerViewModel(private val mediaPlayerManager: MediaPlayerManager) : View
         // Logic to stop playback
         _playbackState.value = PlaybackState.STOPPED
         mediaPlayerManager.stop()
+        _currentPosition.value=0
     }
 
     // Enum to represent playback states
