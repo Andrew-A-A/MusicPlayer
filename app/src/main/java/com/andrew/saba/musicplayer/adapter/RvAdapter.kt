@@ -47,6 +47,12 @@ class RvAdapter(private val audioTracks:ArrayList<AudioTrack>):RecyclerView.Adap
             .into(holder.trackImage)
     }
 
+    fun updateData(filteredTracks: ArrayList<AudioTrack>) {
+        audioTracks.clear() // Clear the existing data
+        audioTracks.addAll(filteredTracks) // Add the new data
+        notifyDataSetChanged() // Notify the adapter that the data has changed
+    }
+
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var trackImage: ImageView = itemView.findViewById(R.id.track_img)

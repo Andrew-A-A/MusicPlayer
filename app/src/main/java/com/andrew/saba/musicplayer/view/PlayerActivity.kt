@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
@@ -28,19 +29,38 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         mediaPlayerManager = MediaPlayerManager()
 
         // Initialize the PlayerViewModel
-        playerViewModel = ViewModelProvider(this)[PlayerViewModel::class.java]
+        playerViewModel = PlayerViewModel(mediaPlayerManager)
 
         // Set up the Play/Pause button click listener
         binding.playButton.setOnClickListener {
             if (mediaPlayerManager.isMediaPlaying()) {
                 // If the media is playing, pause it
                 playerViewModel.pause()
-                mediaPlayerManager.pause()
             } else {
                 // If the media is paused, resume playback
-                playerViewModel.play()
-                mediaPlayerManager.resume()
+                playerViewModel.resume()
             }
+        }
+
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                // Handle search query submission, if needed
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Handle search query text changes
+                filterAudioTracks(newText)
+                return true
+            }
+        })
+
+
+
+        // Set up the Stop button click listener
+        binding.stopButton.setOnClickListener{
+            playerViewModel.stop()
+            binding.seekBar.progress=0
         }
 
         // Observe the playback state and update UI accordingly
@@ -143,8 +163,26 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
     // Handle item click in the RecyclerView
     override fun onItemClicked(audioTrack: AudioTrack) {
         // Play the selected track, update the UI, and set the SeekBar max value
-        mediaPlayerManager.playTrack(audioTrack)
-        playerViewModel.play()
+        playerViewModel.play(audioTrack)
         binding.seekBar.max = audioTrack.duration
+    }
+
+    // Function to filter audio tracks based on the search query
+    private fun filterAudioTracks(query: String?) {
+        val tracks=ArrayList<AudioTrack>()
+        getTracksList(tracks)
+        val filteredTracks:ArrayList<AudioTrack> = if (query.isNullOrBlank()) {
+            // If the query is blank, show all tracks
+            tracks
+        } else {
+            // Filter tracks based on the query
+            tracks.filter { track ->
+                track.name.contains(query, ignoreCase = true) ||
+                        track.artist.contains(query, ignoreCase = true)
+            }.toCollection(ArrayList())
+        }
+
+        // Update the RecyclerView with the filtered tracks
+      tracksViewAdapter.updateData(filteredTracks)
     }
 }

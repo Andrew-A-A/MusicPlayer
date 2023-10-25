@@ -47,6 +47,14 @@ class MediaPlayerManager {
         }
     }
 
+    fun stop() {
+        if (mediaPlayer.isPlaying) {
+            mediaPlayer.stop()
+            currentTrack=null
+        }
+    }
+
+
     fun nextTrack() {
         // Implement logic to play the next track in the playlist
 

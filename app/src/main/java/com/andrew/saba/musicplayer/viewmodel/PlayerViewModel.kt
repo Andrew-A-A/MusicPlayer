@@ -3,9 +3,10 @@ package com.andrew.saba.musicplayer.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.andrew.saba.musicplayer.model.AudioTrack
 import com.andrew.saba.musicplayer.model.MediaPlayerManager
 
-class PlayerViewModel : ViewModel(),MediaPlayerManager.PlaybackCallback {
+class PlayerViewModel(private val mediaPlayerManager: MediaPlayerManager) : ViewModel(),MediaPlayerManager.PlaybackCallback {
     // LiveData to observe the current playback state
     private val _playbackState = MutableLiveData<PlaybackState>()
     val playbackState: LiveData<PlaybackState>
@@ -18,6 +19,7 @@ class PlayerViewModel : ViewModel(),MediaPlayerManager.PlaybackCallback {
     init {
         // Initialize the ViewModel with an initial playback state
         _playbackState.value = PlaybackState.STOPPED
+        mediaPlayerManager.stop()
     }
 
     fun updateCurrentPosition(position: Int) {
@@ -25,21 +27,29 @@ class PlayerViewModel : ViewModel(),MediaPlayerManager.PlaybackCallback {
     }
 
     // Function to start or resume playback
-    fun play() {
+    fun play(audioTrack: AudioTrack) {
         // Logic to start or resume playback
         _playbackState.value = PlaybackState.PLAYING
+        mediaPlayerManager.playTrack(audioTrack)
+    }
+
+    fun resume(){
+        _playbackState.value = PlaybackState.PLAYING
+        mediaPlayerManager.resume()
     }
 
     // Function to pause playback
     fun pause() {
         // Logic to pause playback
         _playbackState.value = PlaybackState.PAUSED
+        mediaPlayerManager.pause()
     }
 
     // Function to stop playback
     fun stop() {
         // Logic to stop playback
         _playbackState.value = PlaybackState.STOPPED
+        mediaPlayerManager.stop()
     }
 
     // Enum to represent playback states

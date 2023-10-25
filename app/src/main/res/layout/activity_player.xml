@@ -14,8 +14,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/searchView" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
@@ -24,7 +23,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent" >
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="VisualLintBottomNav">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -47,7 +47,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/seekBar"
-                app:srcCompat="@android:drawable/ic_media_play" />
+                app:srcCompat="@android:drawable/ic_media_play"
+                android:contentDescription="@string/play_pause" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/nextButton"
@@ -58,7 +59,8 @@
                 app:layout_constraintBottom_toBottomOf="@+id/playButton"
                 app:layout_constraintStart_toEndOf="@+id/playButton"
                 app:layout_constraintTop_toTopOf="@+id/playButton"
-                app:srcCompat="@android:drawable/ic_media_next" />
+                app:srcCompat="@android:drawable/ic_media_next"
+                android:contentDescription="@string/play_next_track" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/previousButton"
@@ -70,10 +72,11 @@
                 app:layout_constraintEnd_toStartOf="@+id/playButton"
                 app:layout_constraintTop_toTopOf="@+id/playButton"
                 app:layout_constraintVertical_bias="0.0"
-                app:srcCompat="@android:drawable/ic_media_previous" />
+                app:srcCompat="@android:drawable/ic_media_previous"
+                android:contentDescription="@string/play_previous_track" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/floatingActionButton6"
+                android:id="@+id/stopButton"
                 android:layout_width="55dp"
                 android:layout_height="54dp"
                 android:layout_marginEnd="12dp"
@@ -81,10 +84,20 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/seekBar"
-                app:srcCompat="@drawable/baseline_stop_24" />
+                app:srcCompat="@drawable/baseline_stop_24"
+                android:contentDescription="@string/stop" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.bottomnavigation.BottomNavigationView>
+
+    <SearchView
+        android:id="@+id/searchView"
+        android:layout_width="0dp"
+        android:layout_height="54dp"
+        android:queryHint="@string/search"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
