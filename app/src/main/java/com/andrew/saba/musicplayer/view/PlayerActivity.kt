@@ -1,18 +1,23 @@
 package com.andrew.saba.musicplayer.view
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentUris
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
+import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.adapter.RvAdapter
 import com.andrew.saba.musicplayer.databinding.ActivityPlayerBinding
 import com.andrew.saba.musicplayer.model.AudioTrack
 import com.andrew.saba.musicplayer.model.MediaPlayerManager
 import com.andrew.saba.musicplayer.viewmodel.PlayerViewModel
+
 
 class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
     private lateinit var binding: ActivityPlayerBinding
@@ -25,26 +30,20 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+
         // Initialize the MediaPlayerManager
         mediaPlayerManager = MediaPlayerManager()
 
         // Initialize the PlayerViewModel
         playerViewModel = PlayerViewModel(mediaPlayerManager)
 
-        // Set up the Play/Pause button click listener
-        binding.playButton.setOnClickListener {
-            if (mediaPlayerManager.isMediaPlaying()) {
-                // If the media is playing, pause it
-                playerViewModel.pause()
-            } else {
-                // If the media is paused, resume playback
-                playerViewModel.resume()
-            }
-        }
-
+        // Set up search text box
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 // Handle search query submission, if needed
+                filterAudioTracks(query)
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
                 return true
             }
 
@@ -56,10 +55,31 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         })
 
 
+        // Set up the Play/Pause button click listener
+        binding.playButton.setOnClickListener {
+            if (mediaPlayerManager.isMediaPlaying()) {
+                // If the media is playing, pause it
+                playerViewModel.pause()
+            } else {
+                // If the media is paused, resume playback
+                if ( playerViewModel.playbackState.value==PlayerViewModel.PlaybackState.PAUSED)
+                playerViewModel.resume()
+            }
+        }
+
+
 
         // Set up the Stop button click listener
         binding.stopButton.setOnClickListener{
             playerViewModel.stop()
+        }
+
+        //Set up next/previous buttons
+        binding.nextButton.setOnClickListener{
+            mediaPlayerManager.nextTrack()
+        }
+        binding.previousButton.setOnClickListener{
+            mediaPlayerManager.previousTrack()
         }
 
         // Observe the playback state and update UI accordingly
@@ -86,6 +106,24 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         playerViewModel.currentPosition.observe(this) { position ->
             binding.seekBar.progress = position
         }
+
+
+        playerViewModel.playbackState.observe(this) { state ->
+            when (state) {
+                PlayerViewModel.PlaybackState.PLAYING -> {
+                    binding.playButton.setImageResource(R.drawable.ic_pause)
+                }
+                else -> {
+                    binding.playButton.setImageResource(R.drawable.ic_play)
+                }
+            }
+        }
+
+        playerViewModel.currentPosition.observe(this) { position ->
+            // Update your SeekBar or UI element with the current position
+            binding.seekBar.progress = position
+        }
+
     }
 
     // Function to set up the RecyclerView with audio tracks
@@ -97,6 +135,8 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
 
         // Fill tracks list
         getTracksList(audioTracks)
+
+        mediaPlayerManager.setCurrentPlaylist(audioTracks)
 
         // Create and set the RecyclerView adapter
         tracksViewAdapter = RvAdapter(audioTracks)
@@ -147,7 +187,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
                 // Create an audio track object and retrieve album artwork URI
                 val albumArtUri = ContentUris.withAppendedId(
                     Uri.parse("content://media/external/audio/albumart"),
-                    albumId.toLong()
+                    albumId
                 )
 
                 val track = AudioTrack(filePath, trackName, artistName, albumId, duration)
@@ -184,4 +224,6 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         // Update the RecyclerView with the filtered tracks
       tracksViewAdapter.updateData(filteredTracks)
     }
+
+
 }

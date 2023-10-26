@@ -9,7 +9,7 @@ class MediaPlayerManager {
     private var playbackCallback: PlaybackCallback? = null
     private val mediaPlayer: MediaPlayer = MediaPlayer()
     private var currentTrack: AudioTrack? = null
-
+    private var currentPlaylist=ArrayList<AudioTrack>()
     init {
         mediaPlayer.setOnCompletionListener {
             // Handle track completion event here, e.g., play the next track
@@ -55,11 +55,20 @@ class MediaPlayerManager {
 
     fun nextTrack() {
         // Implement logic to play the next track in the playlist
-
+        val currentTrackIndex=currentPlaylist.indexOf(currentTrack)
+        if (currentTrackIndex != -1 && currentTrackIndex < currentPlaylist.size - 1) {
+            val nextTrack = currentPlaylist[currentTrackIndex + 1]
+            playTrack(nextTrack)
+        }
     }
 
     fun previousTrack() {
         // Implement logic to play the previous track in the playlist
+        val currentTrackIndex=currentPlaylist.indexOf(currentTrack)
+        if (currentTrackIndex != -1 && currentTrackIndex < currentPlaylist.size - 2) {
+            val previousTrack = currentPlaylist[currentTrackIndex - 1]
+            playTrack(previousTrack)
+        }
     }
 
     fun seekTo(position: Int) {
@@ -84,6 +93,10 @@ class MediaPlayerManager {
     }
     fun isMediaPlaying():Boolean{
        return mediaPlayer.isPlaying
+    }
+
+    fun setCurrentPlaylist(audioTracks: ArrayList<AudioTrack>) {
+        currentPlaylist=audioTracks
     }
 
     enum class MediaPlayerState {
