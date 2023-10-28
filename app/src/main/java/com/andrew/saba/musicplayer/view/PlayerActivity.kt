@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import com.andrew.saba.musicplayer.R
@@ -19,7 +20,7 @@ import com.andrew.saba.musicplayer.model.MediaPlayerManager
 import com.andrew.saba.musicplayer.viewmodel.PlayerViewModel
 
 
-class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
+class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBar.OnSeekBarChangeListener {
     private lateinit var binding: ActivityPlayerBinding
     private lateinit var tracksViewAdapter: RvAdapter
     private lateinit var mediaPlayerManager: MediaPlayerManager
@@ -55,19 +56,21 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
         })
 
 
+
+        // Set up the Play/Pause button click listener
         // Set up the Play/Pause button click listener
         binding.playButton.setOnClickListener {
             if (mediaPlayerManager.isMediaPlaying()) {
                 // If the media is playing, pause it
                 playerViewModel.pause()
-            } else {
+            } else if (playerViewModel.playbackState.value == PlayerViewModel.PlaybackState.PAUSED) {
                 // If the media is paused, resume playback
-                if ( playerViewModel.playbackState.value==PlayerViewModel.PlaybackState.PAUSED)
                 playerViewModel.resume()
             }
         }
 
 
+        binding.seekBar.setOnSeekBarChangeListener(this)
 
         // Set up the Stop button click listener
         binding.stopButton.setOnClickListener{
@@ -223,6 +226,21 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener {
 
         // Update the RecyclerView with the filtered tracks
       tracksViewAdapter.updateData(filteredTracks)
+    }
+    override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+        if (p2) {
+            // Calculate the new position based on the progress value
+            val newPosition = (p0!!.max * p1) / 100
+            mediaPlayerManager.seekTo(p1)
+        }
+    }
+
+    override fun onStartTrackingTouch(p0: SeekBar?) {
+
+    }
+
+    override fun onStopTrackingTouch(p0: SeekBar?) {
+
     }
 
 

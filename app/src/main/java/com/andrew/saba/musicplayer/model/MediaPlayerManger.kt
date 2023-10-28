@@ -14,6 +14,7 @@ class MediaPlayerManager {
         mediaPlayer.setOnCompletionListener {
             // Handle track completion event here, e.g., play the next track
             // Implement your logic to manage playlists
+
         }
     }
 
@@ -65,7 +66,7 @@ class MediaPlayerManager {
     fun previousTrack() {
         // Implement logic to play the previous track in the playlist
         val currentTrackIndex=currentPlaylist.indexOf(currentTrack)
-        if (currentTrackIndex != -1 && currentTrackIndex < currentPlaylist.size - 2) {
+        if (currentTrackIndex > 0 && currentTrackIndex <= currentPlaylist.size - 1) {
             val previousTrack = currentPlaylist[currentTrackIndex - 1]
             playTrack(previousTrack)
         }
