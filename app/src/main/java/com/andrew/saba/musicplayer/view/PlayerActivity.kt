@@ -1,35 +1,60 @@
 package com.andrew.saba.musicplayer.view
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.ContentUris
+import android.content.ComponentName
 import android.content.Context
-import android.net.Uri
+import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.provider.MediaStore
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.media3.ui.R.drawable.exo_icon_pause
+import androidx.media3.ui.R.drawable.exo_icon_play
 import androidx.recyclerview.widget.GridLayoutManager
 import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.adapter.RvAdapter
 import com.andrew.saba.musicplayer.databinding.ActivityPlayerBinding
 import com.andrew.saba.musicplayer.model.AudioTrack
 import com.andrew.saba.musicplayer.model.MediaPlayerManager
+import com.andrew.saba.musicplayer.service.MusicService
 import com.andrew.saba.musicplayer.viewmodel.PlayerViewModel
 
 
+const val CHANNEL_ID="player"
 class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBar.OnSeekBarChangeListener {
     private lateinit var binding: ActivityPlayerBinding
     private lateinit var tracksViewAdapter: RvAdapter
     private lateinit var mediaPlayerManager: MediaPlayerManager
     private lateinit var playerViewModel: PlayerViewModel
+    private var musicService: MusicService? = null
+    private var isMusicServiceBound = false
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as MusicService.MusicBinder
+            musicService = binder.getService()
+            isMusicServiceBound = true
+        }
 
+        override fun onServiceDisconnected(name: ComponentName?) {
+            musicService = null
+            isMusicServiceBound = false
+        }
+    }
+
+    @SuppressLint("PrivateResource")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        createAndRegisterNotificationChannel()
+
 
 
         // Initialize the MediaPlayerManager
@@ -37,6 +62,11 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
 
         // Initialize the PlayerViewModel
         playerViewModel = PlayerViewModel(mediaPlayerManager)
+
+        //Bind service intent with App activity
+        val serviceIntent = Intent(this, MusicService::class.java)
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+
 
         // Set up search text box
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -58,18 +88,20 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
 
 
         // Set up the Play/Pause button click listener
-        // Set up the Play/Pause button click listener
         binding.playButton.setOnClickListener {
             if (mediaPlayerManager.isMediaPlaying()) {
                 // If the media is playing, pause it
                 playerViewModel.pause()
+                  if (isMusicServiceBound) musicService!!.pauseMusic()
             } else if (playerViewModel.playbackState.value == PlayerViewModel.PlaybackState.PAUSED) {
                 // If the media is paused, resume playback
                 playerViewModel.resume()
+                    if (isMusicServiceBound) musicService!!.playMusic()
             }
         }
 
 
+        //Set up seek bar change listener
         binding.seekBar.setOnSeekBarChangeListener(this)
 
         // Set up the Stop button click listener
@@ -90,11 +122,11 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
             when (state) {
                 PlayerViewModel.PlaybackState.PLAYING -> {
                     // Change the Play/Pause button icon to pause when playing
-                    binding.playButton.setImageResource(androidx.media3.ui.R.drawable.exo_icon_pause)
+                    binding.playButton.setImageResource(exo_icon_pause)
                 }
                 else -> {
                     // Change the Play/Pause button icon to play when paused
-                    binding.playButton.setImageResource(androidx.media3.ui.R.drawable.exo_icon_play)
+                    binding.playButton.setImageResource(exo_icon_play)
                 }
             }
         }
@@ -111,6 +143,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
         }
 
 
+        //Set play back state observer to change play/pause button icon
         playerViewModel.playbackState.observe(this) { state ->
             when (state) {
                 PlayerViewModel.PlaybackState.PLAYING -> {
@@ -121,12 +154,36 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                 }
             }
         }
-
+        //Set up current position of the seek bar (Sync with media player)
         playerViewModel.currentPosition.observe(this) { position ->
             // Update your SeekBar or UI element with the current position
             binding.seekBar.progress = position
         }
 
+    }
+
+
+    //Unbound service on activity destroy
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isMusicServiceBound) {
+            // Unbind from the MusicService
+            unbindService(serviceConnection)
+            isMusicServiceBound = false
+        }
+    }
+
+    private fun createAndRegisterNotificationChannel() {
+        // Create the NotificationChannel.
+        val name = getString(R.string.channel_name)
+        val descriptionText = getString(R.string.channel_description)
+        val importance = NotificationManager.IMPORTANCE_MIN
+        val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+        mChannel.description = descriptionText
+        // Register the channel with the system. You can't change the importance
+        // or other notification behaviors after this.
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(mChannel)
     }
 
     // Function to set up the RecyclerView with audio tracks
@@ -187,12 +244,6 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                     continue  // Skip invalid entries
                 }
 
-                // Create an audio track object and retrieve album artwork URI
-                val albumArtUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    albumId
-                )
-
                 val track = AudioTrack(filePath, trackName, artistName, albumId, duration)
                 audioTracks.add(track)
             }
@@ -206,6 +257,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     override fun onItemClicked(audioTrack: AudioTrack) {
         // Play the selected track, update the UI, and set the SeekBar max value
         playerViewModel.play(audioTrack)
+        if (isMusicServiceBound) musicService!!.playMusic()
         binding.seekBar.max = audioTrack.duration
     }
 
@@ -229,8 +281,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     }
     override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
         if (p2) {
-            // Calculate the new position based on the progress value
-            val newPosition = (p0!!.max * p1) / 100
+            // Set new position based on the progress value
             mediaPlayerManager.seekTo(p1)
         }
     }
@@ -242,6 +293,4 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     override fun onStopTrackingTouch(p0: SeekBar?) {
 
     }
-
-
 }

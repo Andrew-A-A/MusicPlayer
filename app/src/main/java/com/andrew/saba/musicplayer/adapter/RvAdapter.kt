@@ -37,7 +37,7 @@ class RvAdapter(private val audioTracks:ArrayList<AudioTrack>):RecyclerView.Adap
         holder.currentTrack=trackItem
         val albumArtUri = ContentUris.withAppendedId(
             Uri.parse("content://media/external/audio/albumart"),
-            trackItem.image.toLong()
+            trackItem.image
         )
         Picasso.get()
             .load(albumArtUri)

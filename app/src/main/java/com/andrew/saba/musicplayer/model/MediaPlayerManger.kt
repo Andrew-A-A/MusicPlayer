@@ -3,6 +3,7 @@ package com.andrew.saba.musicplayer.model
 import android.media.MediaPlayer
 import java.util.Timer
 import java.util.TimerTask
+import com.andrew.saba.musicplayer.service.MusicService
 
 
 class MediaPlayerManager {
@@ -31,12 +32,16 @@ class MediaPlayerManager {
             prepare()
             start()
         }
-        startPositionUpdate()
+        MusicService.title=audioTrack.name
+        MusicService.artist=audioTrack.artist
+        MusicService.artwork= audioTrack.image
+        MusicService.mediaPlayer=mediaPlayer
     }
 
     fun resume() {
         if (currentTrack != null && !mediaPlayer.isPlaying) {
             mediaPlayer.start()
+            MusicService.mediaPlayer=mediaPlayer
         }
         startPositionUpdate()
     }
@@ -45,12 +50,14 @@ class MediaPlayerManager {
     fun pause() {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.pause()
+            MusicService.mediaPlayer=mediaPlayer
         }
     }
 
     fun stop() {
         mediaPlayer.reset()
         currentTrack=null
+        MusicService.mediaPlayer=mediaPlayer
     }
 
 
