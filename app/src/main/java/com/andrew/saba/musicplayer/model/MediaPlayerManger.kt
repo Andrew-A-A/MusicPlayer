@@ -1,9 +1,9 @@
 package com.andrew.saba.musicplayer.model
 
 import android.media.MediaPlayer
+import com.andrew.saba.musicplayer.service.MusicService
 import java.util.Timer
 import java.util.TimerTask
-import com.andrew.saba.musicplayer.service.MusicService
 
 
 class MediaPlayerManager {
@@ -92,8 +92,13 @@ class MediaPlayerManager {
     private fun startPositionUpdate() {
         positionUpdateTimer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                val currentPosition = mediaPlayer.currentPosition
-                playbackCallback?.onPositionChanged(currentPosition)
+                try {
+                    val currentPosition = mediaPlayer.currentPosition
+                    playbackCallback?.onPositionChanged(currentPosition)
+                }
+                catch (e: IllegalStateException){
+                    positionUpdateTimer.cancel()
+                }
             }
         }, 0, 100) // Update every 1 second
     }
