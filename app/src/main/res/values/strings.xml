@@ -7,4 +7,5 @@
     <string name="search">Search</string>
     <string name="channel_name">Media player</string>
     <string name="channel_description">Media player controls</string>
+    <string name="track_thumbnail">Track thumbnail</string>
 </resources>
