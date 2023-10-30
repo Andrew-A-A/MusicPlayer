@@ -13,10 +13,13 @@ import android.provider.MediaStore
 import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
 import android.widget.SeekBar
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.ui.R.drawable.exo_icon_pause
 import androidx.media3.ui.R.drawable.exo_icon_play
 import androidx.recyclerview.widget.GridLayoutManager
+import android.Manifest
 import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.adapter.RvAdapter
 import com.andrew.saba.musicplayer.databinding.ActivityPlayerBinding
@@ -32,6 +35,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     private lateinit var tracksViewAdapter: RvAdapter
     private lateinit var mediaPlayerManager: MediaPlayerManager
     private lateinit var playerViewModel: PlayerViewModel
+    private var permissionGranted=true
     private var musicService: MusicService? = null
     private var isMusicServiceBound = false
     private val serviceConnection = object : ServiceConnection {
@@ -55,6 +59,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
 
         createAndRegisterNotificationChannel()
 
+        requestPermissions()
 
 
         // Initialize the MediaPlayerManager
@@ -131,8 +136,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
             }
         }
 
-        // Set up the RecyclerView and load audio tracks
-        setRecyclerAdapter()
+
 
         // Set the playback callback for the MediaPlayerManager
         mediaPlayerManager.setPlaybackCallback(playerViewModel)
@@ -160,6 +164,28 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
             binding.seekBar.progress = position
         }
 
+    }
+        private val activityResultLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+                // Handle Permission granted/rejected
+                permissions.entries.forEach {
+                    if (it.key == Manifest.permission.READ_EXTERNAL_STORAGE && !it.value)
+                        permissionGranted = false
+                }
+                if (!permissionGranted) {
+                    Toast.makeText(baseContext,
+                        "Permission request denied",
+                        Toast.LENGTH_SHORT).show()
+                    this.finish()
+                } else {
+                    // Set up the RecyclerView and load audio tracks
+                    setRecyclerAdapter()
+                }
+            }
+
+    private fun requestPermissions() {
+        activityResultLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
     }
 
 

@@ -15,7 +15,7 @@ class MediaPlayerManager {
         mediaPlayer.setOnCompletionListener {
             // Handle track completion event here, e.g., play the next track
             // Implement your logic to manage playlists
-
+          //  nextTrack()
         }
     }
 
