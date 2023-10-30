@@ -1,4 +1,4 @@
-# MusicPlayer App
+# Music Player App
 
 SongPlayer is a music application that allows users to search for and play songs stored on their phone. This open-source project is developed using Android Studio and utilizes Kotlin for the programming language, XML for the user interface, and SQL for local database management.
 
