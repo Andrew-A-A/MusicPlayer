@@ -15,7 +15,7 @@ class MediaPlayerManager {
         mediaPlayer.setOnCompletionListener {
             // Handle track completion event here, e.g., play the next track
             // Implement your logic to manage playlists
-          //  nextTrack()
+            nextTrack()
         }
     }
 
@@ -36,6 +36,7 @@ class MediaPlayerManager {
         MusicService.artist=audioTrack.artist
         MusicService.artwork= audioTrack.image
         MusicService.mediaPlayer=mediaPlayer
+        startPositionUpdate()
     }
 
     fun resume() {
@@ -66,6 +67,7 @@ class MediaPlayerManager {
         val currentTrackIndex=currentPlaylist.indexOf(currentTrack)
         if (currentTrackIndex != -1 && currentTrackIndex < currentPlaylist.size - 1) {
             val nextTrack = currentPlaylist[currentTrackIndex + 1]
+            mediaPlayer.reset()
             playTrack(nextTrack)
         }
     }
@@ -75,6 +77,7 @@ class MediaPlayerManager {
         val currentTrackIndex=currentPlaylist.indexOf(currentTrack)
         if (currentTrackIndex > 0 && currentTrackIndex <= currentPlaylist.size - 1) {
             val previousTrack = currentPlaylist[currentTrackIndex - 1]
+            mediaPlayer.reset()
             playTrack(previousTrack)
         }
     }
@@ -101,6 +104,10 @@ class MediaPlayerManager {
     }
     fun isMediaPlaying():Boolean{
        return mediaPlayer.isPlaying
+    }
+
+    fun getCurrentTrackDuration(): Int {
+        return currentTrack?.duration ?: 0
     }
 
     fun setCurrentPlaylist(audioTracks: ArrayList<AudioTrack>) {

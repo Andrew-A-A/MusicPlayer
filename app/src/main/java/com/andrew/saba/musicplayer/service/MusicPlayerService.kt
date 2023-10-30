@@ -25,6 +25,7 @@ import androidx.media.app.NotificationCompat as MediaNotificationCompat
 
 
 class MusicService : Service() {
+
     companion object {
         var artwork: Long =0
         var mediaPlayer: MediaPlayer? = null
@@ -109,6 +110,8 @@ class MusicService : Service() {
         mediaSession.isActive = true
     }
 
+
+
     override fun onBind(intent: Intent?): IBinder {
         return binder
     }
@@ -163,7 +166,7 @@ class MusicService : Service() {
         val previousAction = PendingIntent.getService(this, 0, Intent("PreviousAction"), PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.baseline_music_note_24)
             .setContentTitle(title)
             .setLargeIcon(AppCompatResources.getDrawable(this,R.drawable.default_track_ic)?.toBitmap())
             .setContentText(artist)
@@ -214,4 +217,7 @@ class MusicService : Service() {
         }
         return START_STICKY
     }
+
+
+
 }

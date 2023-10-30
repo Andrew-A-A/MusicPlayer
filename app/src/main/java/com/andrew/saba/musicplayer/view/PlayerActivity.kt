@@ -20,8 +20,11 @@ import androidx.media3.ui.R.drawable.exo_icon_pause
 import androidx.media3.ui.R.drawable.exo_icon_play
 import androidx.recyclerview.widget.GridLayoutManager
 import android.Manifest
+import android.view.View
+import android.widget.ArrayAdapter
 import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.adapter.RvAdapter
+import com.andrew.saba.musicplayer.database.SearchHistoryDAO
 import com.andrew.saba.musicplayer.databinding.ActivityPlayerBinding
 import com.andrew.saba.musicplayer.model.AudioTrack
 import com.andrew.saba.musicplayer.model.MediaPlayerManager
@@ -35,6 +38,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     private lateinit var tracksViewAdapter: RvAdapter
     private lateinit var mediaPlayerManager: MediaPlayerManager
     private lateinit var playerViewModel: PlayerViewModel
+    val searchHistoryDAO = SearchHistoryDAO(this)
     private var permissionGranted=true
     private var musicService: MusicService? = null
     private var isMusicServiceBound = false
@@ -80,15 +84,50 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                 filterAudioTracks(query)
                 val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+                // Store the search query in the database
+                if (!query.isNullOrBlank()) {
+                    // Check if the query already exists in the database
+                    if (!searchHistoryDAO.isSearchQueryExists(query)) {
+                        searchHistoryDAO.insertSearchQuery(query)
+                    }
+                }
+                binding.searchDropdown.visibility = View.GONE
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 // Handle search query text changes
                 filterAudioTracks(newText)
+
+                // Retrieve search history and display it in the dropdown
+                val searchQueries = searchHistoryDAO.getAllSearchQueries()
+                val adapter = ArrayAdapter(baseContext, android.R.layout.simple_dropdown_item_1line, searchQueries)
+                binding.searchDropdown.adapter = adapter
+
+                // Show the dropdown when the user starts typing
+                if (newText?.isNotEmpty() == true) {
+                    binding.searchDropdown.visibility = View.VISIBLE
+                } else {
+                    binding.searchDropdown.visibility = View.GONE
+                }
                 return true
             }
         })
+
+        binding.searchDropdown.setOnItemClickListener { parent, view, position, id ->
+            val selectedQuery = parent.adapter.getItem(position) as String
+            // Handle the selected item here
+            // For example, you can populate the search view with the selected query
+            binding.searchView.setQuery(selectedQuery, true)
+            binding.searchDropdown.visibility = View.GONE
+        }
+
+        // Set up a click listener for the SearchView to show search history
+        binding.searchView.setOnClickListener {
+            val searchQueries = searchHistoryDAO.getAllSearchQueries()
+            // Display the search history to the user
+            // You can use a dialog, a dropdown, or any UI component to show the history
+        }
 
 
 
@@ -103,6 +142,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                 playerViewModel.resume()
                     if (isMusicServiceBound) musicService!!.playMusic()
             }
+
         }
 
 
@@ -117,9 +157,11 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
         //Set up next/previous buttons
         binding.nextButton.setOnClickListener{
             mediaPlayerManager.nextTrack()
+            binding.seekBar.max=mediaPlayerManager.getCurrentTrackDuration()
         }
         binding.previousButton.setOnClickListener{
             mediaPlayerManager.previousTrack()
+            binding.seekBar.max=mediaPlayerManager.getCurrentTrackDuration()
         }
 
         // Observe the playback state and update UI accordingly
@@ -135,8 +177,6 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                 }
             }
         }
-
-
 
         // Set the playback callback for the MediaPlayerManager
         mediaPlayerManager.setPlaybackCallback(playerViewModel)
@@ -158,11 +198,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
                 }
             }
         }
-        //Set up current position of the seek bar (Sync with media player)
-        playerViewModel.currentPosition.observe(this) { position ->
-            // Update your SeekBar or UI element with the current position
-            binding.seekBar.progress = position
-        }
+
 
     }
         private val activityResultLauncher =
