@@ -22,10 +22,6 @@ class PlayerViewModel(private val mediaPlayerManager: MediaPlayerManager) : View
         mediaPlayerManager.stop()
     }
 
-    fun updateCurrentPosition(position: Int) {
-        _currentPosition.postValue(position)
-    }
-
     // Function to start or resume playback
     fun play(audioTrack: AudioTrack) {
         // Logic to start or resume playback

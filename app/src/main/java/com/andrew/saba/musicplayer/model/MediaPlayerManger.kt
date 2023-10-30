@@ -19,11 +19,6 @@ class MediaPlayerManager {
         }
     }
 
-    fun initialize() {
-        // Initialize the MediaPlayer
-
-    }
-
     fun playTrack(audioTrack: AudioTrack) {
         currentTrack = audioTrack
         mediaPlayer.apply {
@@ -114,11 +109,6 @@ class MediaPlayerManager {
         currentPlaylist=audioTracks
     }
 
-    enum class MediaPlayerState {
-        PLAYING,
-        PAUSED,
-        STOPPED
-    }
     interface PlaybackCallback {
         fun onPositionChanged(position: Int)
     }

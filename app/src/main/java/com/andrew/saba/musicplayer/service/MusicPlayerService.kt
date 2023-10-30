@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.andrew.saba.musicplayer.service
 
 
@@ -15,17 +17,18 @@ import android.os.Binder
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.view.CHANNEL_ID
+import com.andrew.saba.musicplayer.view.PlayerActivity
 import androidx.media.app.NotificationCompat as MediaNotificationCompat
 
 
 class MusicService : Service() {
-
     companion object {
         var artwork: Long =0
         var mediaPlayer: MediaPlayer? = null
@@ -80,6 +83,9 @@ class MusicService : Service() {
                 )
                 .build()
         )
+
+
+
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
                 super.onPlay()
@@ -96,15 +102,6 @@ class MusicService : Service() {
                 stopMusic()
             }
 
-            override fun onSkipToNext() {
-                super.onSkipToNext()
-                // Implement skipping to the next track
-            }
-
-            override fun onSkipToPrevious() {
-                super.onSkipToPrevious()
-                // Implement skipping to the previous track
-            }
         })
 
         mediaSession.isActive = true
@@ -128,6 +125,7 @@ class MusicService : Service() {
             showNotification()
         }
     }
+
 
     fun pauseMusic() {
         if (mediaPlayer!!.isPlaying) {
@@ -158,27 +156,33 @@ class MusicService : Service() {
     }
 
 
-
     private fun showNotification() {
+        // Create an intent to the main activity
+        val notificationIntent = Intent(this, PlayerActivity::class.java)
+        notificationIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         val playPauseAction = PendingIntent.getService(this, 0, Intent("PlayPauseAction"), PendingIntent.FLAG_IMMUTABLE)
         val stopAction = PendingIntent.getService(this, 0, Intent("StopAction"), PendingIntent.FLAG_IMMUTABLE)
-        val nextAction = PendingIntent.getService(this, 0, Intent("NextAction"), PendingIntent.FLAG_IMMUTABLE)
-        val previousAction = PendingIntent.getService(this, 0, Intent("PreviousAction"), PendingIntent.FLAG_IMMUTABLE)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.baseline_music_note_24)
             .setContentTitle(title)
             .setLargeIcon(AppCompatResources.getDrawable(this,R.drawable.default_track_ic)?.toBitmap())
             .setContentText(artist)
-            .addAction(NotificationCompat.Action(R.drawable.ic_prev, "Previous", previousAction))
+            .setContentIntent(contentIntent)
             .addAction(
-                NotificationCompat.Action(R.drawable.ic_play, "Play/Pause", playPauseAction)
+                NotificationCompat.Action(if (mediaPlayer!!.isPlaying) R.drawable.ic_pause else R.drawable.ic_play, "Play/Pause", playPauseAction)
             )
-            .addAction(NotificationCompat.Action(R.drawable.ic_next, "Next", nextAction))
             .addAction(NotificationCompat.Action(R.drawable.baseline_stop_24, "Stop", stopAction))
             .setStyle(
                 MediaNotificationCompat.MediaStyle()
-                    .setShowActionsInCompactView(0, 1, 2, 3)
+                    .setShowActionsInCompactView(0, 1)
                     .setMediaSession(mediaSession.sessionToken)  // Set the media session here
             )
             .setPriority(NotificationCompat.PRIORITY_MIN)
@@ -197,6 +201,7 @@ class MusicService : Service() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i("LOL", "onStartCommand: ")
         when (intent?.action) {
             "PlayPauseAction" -> {
                 if (mediaPlayer?.isPlaying == true) {
@@ -207,12 +212,6 @@ class MusicService : Service() {
             }
             "StopAction" -> {
                 stopMusic()
-            }
-            "NextAction" -> {
-                // Handle the action to play the next track
-            }
-            "PreviousAction" -> {
-                // Handle the action to play the previous track
             }
         }
         return START_STICKY

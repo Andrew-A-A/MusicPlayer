@@ -21,10 +21,16 @@
         android:theme="@style/Theme.MusicPlayer"
         tools:targetApi="31">
 
-        <service
-            android:name="com.andrew.saba.musicplayer.service.MusicService"
+        <service android:name=".service.MusicService"
             android:exported="false"
-            android:enabled="true" />
+            android:enabled="true">
+            <intent-filter android:priority="100">
+                <action android:name="PlayPauseAction" />
+                <action android:name="StopAction" />
+                <action android:name="NextAction" />
+                <action android:name="PreviousAction" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".view.PlayerActivity"

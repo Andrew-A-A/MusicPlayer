@@ -1,5 +1,6 @@
 package com.andrew.saba.musicplayer.view
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,7 +11,9 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
+import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.SearchView
 import android.widget.SeekBar
 import android.widget.Toast
@@ -19,9 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.ui.R.drawable.exo_icon_pause
 import androidx.media3.ui.R.drawable.exo_icon_play
 import androidx.recyclerview.widget.GridLayoutManager
-import android.Manifest
-import android.view.View
-import android.widget.ArrayAdapter
 import com.andrew.saba.musicplayer.R
 import com.andrew.saba.musicplayer.adapter.RvAdapter
 import com.andrew.saba.musicplayer.database.SearchHistoryDAO
@@ -114,7 +114,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
             }
         })
 
-        binding.searchDropdown.setOnItemClickListener { parent, view, position, id ->
+        binding.searchDropdown.setOnItemClickListener { parent, _, position, _ ->
             val selectedQuery = parent.adapter.getItem(position) as String
             // Handle the selected item here
             // For example, you can populate the search view with the selected query
@@ -124,11 +124,10 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
 
         // Set up a click listener for the SearchView to show search history
         binding.searchView.setOnClickListener {
-            val searchQueries = searchHistoryDAO.getAllSearchQueries()
+            searchHistoryDAO.getAllSearchQueries()
             // Display the search history to the user
             // You can use a dialog, a dropdown, or any UI component to show the history
         }
-
 
 
         // Set up the Play/Pause button click listener
@@ -229,8 +228,9 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
     override fun onDestroy() {
         super.onDestroy()
         if (isMusicServiceBound) {
+            musicService?.stopMusic()
             // Unbind from the MusicService
-            unbindService(serviceConnection)
+           unbindService(serviceConnection)
             isMusicServiceBound = false
         }
     }
@@ -265,6 +265,7 @@ class PlayerActivity : AppCompatActivity(), RvAdapter.OnItemClickListener,SeekBa
         tracksViewAdapter.setOnItemClickListener(this)
         binding.recyclerView.adapter = tracksViewAdapter
     }
+
 
     //Initialize audio tracks list
     private fun getTracksList(audioTracks: ArrayList<AudioTrack>) {
